@@ -1,0 +1,455 @@
+---
+title: "From Crisis to Recovery: Analyzing Fannie Mae's Contrasting Turmoil in 2007 with Resilience in 2019"
+author: Sanya Sanjeev Kumar Gangwar
+format: html
+output: bookdown::html_document2
+toc: false
+editor: visual
+---
+
+```{=html}
+<!This block assists in formatting the title, font size, chart caption, etc.– –>
+<style type="text/css">
+  .title {
+    text-align: left;
+}
+body{ /* Normal  */
+      font-size: 16px;
+      margin: 2.5cm;
+      top: 1.5cm;
+      text-align: justify;
+  }
+  .caption {
+    font-size: big;
+    text-align: center;
+    position: above;
+}
+</style>
+```
+```{css plotly-caption, echo = FALSE}
+/*Include this block if you like the chart caption at the top instead of the bottom.*/
+div.figure {
+  display: table;
+}
+div.figure p {
+  display: table-caption;
+  caption-side: top;
+}
+```
+
+------------------------------------------------------------------------
+
+In 2007-2008 the high number of mortgage loan defaulters, including Fannie Mae, caused financial crisis severely impacting the global economy, leading to the Great Recession. At the center of this crisis was the housing market crisis, caused by a large number of borrowers defaulting on their mortgage loans. Fannie Mae suffered heavily during the crisis and the U.S. government had to intervene and place Fannie Mae under conservatorship. Today, I am going to be presenting conclusions from my analysis of Fannie Mae’s Data over the fourth quarter of 2007 and 2019 respectively. I want to focus on the high default rates in 2007, the factors causing them and what does 2019 have differently as comparatively better year.
+
+First, I would like to highlight the difference in the average default rates of 2007 and 2019. @ref(fig: Figure1)In 2007, the average default rate across all mortgages was around 0.09 or 9%, which is extremely high and reflective of the severe economic downturn during that period. In contrast, the average default rate in 2019 was only around 0.002 or 0.2%, a remarkable decline and a sign of a much healthier housing market and economy. Now that we have established this let’s move to the factors leading here.
+
+The Debt to Income Ratio @ref(fig: Figure2)is a crucial metric reflecting a borrower's capacity to handle monthly debt obligations. The boxplot showcases a significant disparity in the two years. In 2007, this ratio was markedly higher compared to 2019. Elevated DTI ratios heighten the risk of default and the allowance of such Debts in 2007 despite low income is one of the major factors where 2007 defaulted.
+
+Next let’s study the credit scores of the borrowers and co borrowers. Since these are more than a decade apart and it would not make sense comparing them, I have normalized them. @ref(fig: Figure3) In 2007, there was a significant proportion of borrowers with lower credit scores, indicating a higher risk profile. In contrast, the 2019 data shows a distribution skewed towards higher credit scores, suggesting more stringent lending standards thus reducing the risk of defaulting.
+
+Let’s examine the relationship between loan age and origination rate. @ref(fig: Figure 4) In 2007, many loans had high origination rates, even for those existing for several years. This suggests widespread subprime lending practices, where higher-risk borrowers were offered loans at elevated interest rates. High origination rates, especially in subprime lending to riskier borrowers, could lead to higher default rates. Moreover, in 2007, the wide range of loan ages, with some loans lasting exceptionally long, could deceive borrowers into a false sense of security, especially with reduced monthly payments, which ultimately increases the risk of defaults. 2019 is significantly at lower risk here.
+
+Discussing the Loan to value ratios in 2007 and 2019 @ref(fig: Figure 5) the distributions of original loan to value (OLTV), original combined loan to value (OCLTV) both ratios reveal a greater prevalence of loans with higher leverage in 2007 than in 2019. Higher LTV ratios indicate borrowers have less equity in their property, putting them at greater risk of default, especially if property values decline. In 2007, borrower repayment capacity is not assessed as rigorously based the LTVs, unlike in 2019. This could have resulted in loans being extended to borrowers who may have struggled to afford them.
+
+Let’s see the average default rate for different occupancy statuses @ref(fig: Figure6). In 2007, a higher proportion of loans were issued to investors or for second homes, which tend to carry higher default risks compared to principal residences. Conversely, in 2019, many loans were for principal residences, suggesting a more cautious approach to lending.
+
+Next the average default rate for different purposes @ref(fig: Figure 7) shows default rates to be noticeably higher across all purposes in 2007 compared to 2019. Refinance mortgages had the highest default rate in both years, followed by cash-out refinances and purchases. Though both these years have similar order of purposes for defaulters, the housing crisis around 2007 led to significantly more mortgage defaults compared to the more stable conditions in 2019.
+
+Lastly, to conclude my findings let’s see the interactive chart @ref(fig: Figure 8) We can notice that most states have higher defaulters in 2007 through the bars. Florida especially has a very higher number of defaulters in 2007 (515). States like California, Florida, Arizona, and Illinois had the highest numbers of defaulters in 2007 being the major contributors to the crisis.
+
+In 2019, prudent lending practices with higher borrower credit scores, lower debt-to-income ratios, and reduced leverage emphasize the importance of responsible standards and regulatory oversight. To prevent future crises, prioritizing borrower creditworthiness and managing debt, along with regulating non-traditional mortgage products, is crucial.
+
+(Word count: 779)
+
+<br>
+
+### Figure Appendix {.unnumbered}
+
+```{r, include = FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(scales)
+library(readxl)
+library(zoo)
+library(gapminder) 
+library(gganimate)
+library(gifski)
+library(patchwork) 
+library(usmap) 
+library(plotly); # package for simple interactive charts
+library(ggiraph); # package for advanced interactive charts
+library(covidcast); # package with US census data
+library(cowplot)
+library(gridExtra)
+q4_2007 <- read_rds('data_sample_2007Q4.rds')
+q4_2019 <- read_rds('data_sample_2019Q4.rds')
+defaultrate_provided <- read_csv('default_rate_ts.csv')
+default_rate_new <- defaultrate_provided[, 1:2]
+defaultrate_provided$Date <- as.Date(defaultrate_provided$Date)
+default_rate_new$Date <- as.Date(default_rate_new$Date)
+default_rate_new <- default_rate_new %>%
+  mutate(Year = format(Date, "%Y"))
+default_rate_new$Year <- as.numeric(default_rate_new$Year)
+default_rate_new$Year <- ifelse(default_rate_new$Year < 100, default_rate_new$Year + 2000, default_rate_new$Year)
+q4_2007$year <- 2007
+q4_2019$year <- 2019
+combined_data <- rbind(q4_2007, q4_2019)
+combined_data$year <- as.factor(combined_data$year)
+q4_2007$CHANNEL <- as.factor(q4_2007$CHANNEL)
+summary(q4_2007$CHANNEL)
+q4_2019$CHANNEL <- as.factor(q4_2019$CHANNEL)
+summary(q4_2019$CHANNEL)
+q4_2007$NUM_BO <- as.numeric(q4_2007$NUM_BO)
+summary(q4_2007$NUM_BO)
+q4_2019$NUM_BO <- as.numeric(q4_2019$NUM_BO)
+summary(q4_2019$NUM_BO)
+q4_2007$FIRST_FLAG <- as.factor(q4_2007$FIRST_FLAG)
+summary(q4_2007$FIRST_FLAG)
+q4_2019$FIRST_FLAG <- as.factor(q4_2019$FIRST_FLAG)
+summary(q4_2019$FIRST_FLAG)
+q4_2007$PURPOSE <- as.factor(q4_2007$PURPOSE)
+summary(q4_2007$PURPOSE)
+q4_2019$PURPOSE <- as.factor(q4_2019$PURPOSE)
+summary(q4_2019$PURPOSE)
+q4_2007$STATE <- as.factor(q4_2007$STATE)
+summary(q4_2007$STATE)
+q4_2019$STATE <- as.factor(q4_2019$STATE)
+summary(q4_2019$STATE)
+q4_2007$DEFAULT_FLAG <- as.factor(q4_2007$DEFAULT_FLAG)
+summary(q4_2007$DEFAULT_FLAG)
+q4_2019$DEFAULT_FLAG <- as.factor(q4_2019$DEFAULT_FLAG)
+summary(q4_2019$DEFAULT_FLAG)
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r, include = FALSE}
+q4_2007_bar <- combined_data[combined_data$year == 2007, ]
+
+q4_2019_bar <- combined_data[combined_data$year == 2019, ]
+
+q4_2007_proportions <- prop.table(table(q4_2007_bar$DEFAULT_FLAG))
+q4_2019_proportions <- prop.table(table(q4_2019_bar$DEFAULT_FLAG))
+
+proportions_data <- data.frame(
+  Year = c(2007, 2019),
+  Proportion_Default_Flag_0 = c(q4_2007_proportions[["0"]], q4_2019_proportions[["0"]]),
+  Proportion_Default_Flag_1 = c(q4_2007_proportions[["1"]], q4_2019_proportions[["1"]])
+)
+proportions_data$Year <- factor(proportions_data$Year, levels = c(2007, 2019))
+```
+
+```{r Figure 1, echo = FALSE, fig.width=10, fig.height = 6, fig.cap="Average Default Rate Comparison"}
+ggplot(proportions_data, aes(x = Year, y = Proportion_Default_Flag_1, fill = as.factor(Year))) +
+  geom_bar(stat = "identity", alpha = 0.8) +
+  geom_text(aes(label = round(Proportion_Default_Flag_1, 3), y = Proportion_Default_Flag_1), 
+            position = position_stack(vjust = 1.05), 
+            size = 3, 
+            color = "black") + 
+  scale_fill_manual(values = c("red4", "darkgreen")) +
+  labs(
+    x = "Year",
+    y = "Average Default Rate"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 0.5), 
+    axis.title.x = element_text(margin = margin(t = 10)),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.position = "bottom",
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.line.x = element_blank(),
+    axis.line.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank()
+  ) +
+  scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025))
+```
+
+<br>
+
+```{r, include = FALSE}
+combined_data_2007 <- combined_data %>% filter(year == 2007)
+combined_data_2019 <- combined_data %>% filter(year == 2019)
+```
+
+```{r Figure 2, echo = FALSE, fig.width=10, fig.height = 6, fig.cap="Debt to Income Value Comparison"}
+ggplot() +
+  geom_boxplot(data = combined_data_2007, aes(x = "2007", y = DTI), fill = "transparent", color = 'royalblue', alpha = 0.5, width = 0.5, size = 1.5, outlier.color = NA) +
+  geom_boxplot(data = combined_data_2019, aes(x = "2019", y = DTI), fill = "transparent", color = 'darkorange', alpha = 0.5, width = 0.5, size = 1.5, outlier.color = NA) +
+  geom_jitter(width = 0.1, height = 0, stroke=NA, alpha=0.5,size=2) +
+  labs(x = "Year", y = "DTI Value", caption = "Data: data_sample_2007Q4 \n data_sample_2007Q4") +
+  scale_y_continuous(limits = c(0, 80)) + 
+  theme_classic() +
+  theme(axis.ticks = element_blank(),
+        axis.title.x = element_text(face="bold",margin = margin(t = 20), size = 14),  
+        axis.title.y = element_text(face="bold", size = 14),  
+        plot.caption = element_text(face="italic", size = 12), 
+        plot.title = element_text(size=10),
+        panel.grid.major.y = element_line(color="grey90"))
+```
+
+<br>
+
+```{r, include = FALSE}
+combined_data_filtered <- combined_data[!is.na(combined_data$CSCORE_B) & !is.na(combined_data$CSCORE_C),]
+```
+
+```{r, include = FALSE}
+combined_data_filtered$normalized_CSCORE_B <- scale(combined_data_filtered$CSCORE_B)
+combined_data_filtered$normalized_CSCORE_C <- scale(combined_data_filtered$CSCORE_C)
+
+```
+
+```{r Figure 3, echo = FALSE, fig.width=10, fig.height = 6, fig.cap="Comparison of Credit Scores"}
+plot1 <- ggplot(combined_data_filtered, aes(x = normalized_CSCORE_B, fill = factor(year))) +
+  geom_density(alpha = 0.5, color = "white", size = 0.7) +
+  labs(title = "Borrower Credit Score",
+       x = "Normalized Score",
+       y = "Density",
+       fill = "Year") +
+  scale_fill_manual(values = c("#3a5dad", "#19e4a4")) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        plot.title = element_text(size = 20, face = "bold"),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.text = element_text(size = 12))
+
+plot2 <- ggplot(combined_data_filtered, aes(x = normalized_CSCORE_C, fill = factor(year))) +
+  geom_density(alpha = 0.5, color = "white", size = 0.7) +
+  labs(title. = "Co-Borrower Credit Score",
+       x = "Normalized Score",
+       y = "Density",
+       fill = "Year") +
+  scale_fill_manual(values = c("#3a5dad", "#19e4a4")) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        plot.title = element_text(size = 20, face = "bold"),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.text = element_text(size = 12))
+
+# Adjusting ylim
+y_limit <- max(
+  max(ggplot_build(plot1)$data[[1]]$y),
+  max(ggplot_build(plot2)$data[[1]]$y)
+)
+
+plot1 <- plot1 + ylim(0, y_limit)
+plot2 <- plot2 + ylim(0, y_limit)
+
+shared_plot <- plot_grid(plot1, plot2, align = 'v', ncol = 2)
+
+print(shared_plot)
+
+
+```
+
+<br>
+
+```{r, include = FALSE}
+scatter_data <-  combined_data %>%
+  select(ORIG_RATE,LOAN_AGE,year)
+data_2007 <- subset(scatter_data, year == 2007)
+data_2019 <- subset(scatter_data, year == 2019)
+
+lm_2007 <- lm(LOAN_AGE ~ ORIG_RATE, data = data_2007)
+lm_2019 <- lm(LOAN_AGE ~ ORIG_RATE, data = data_2019)
+```
+
+```{r Figure 4, echo = FALSE, fig.width=10, fig.height = 5, fig.cap="Loan Age vs the Offered Rate of Interest"}
+ggplot(scatter_data, aes(x = ORIG_RATE, y = LOAN_AGE)) +
+  geom_point(data = data_2007, aes(color = "2007"), alpha = 0.5) +  
+  geom_point(data = data_2019, aes(color = "2019"), alpha = 0.5) + 
+  geom_smooth(data = data_2007, aes(group = 1), method = "lm", se = FALSE, color = 'royalblue') + 
+  geom_smooth(data = data_2019, aes(group = 1), method = "lm", se = FALSE, color = 'red4') +
+  labs(x = "Origination Rate", y = "Loan Age", color = "Year") + 
+  scale_color_manual(values = c("2007" = 'royalblue', "2019" = 'red4')) +  
+  theme_classic() +
+  theme(axis.text = element_text(face="bold", size=10),
+        plot.caption = element_text(face="italic"),
+        panel.grid.major.y = element_line(color="grey95"),
+        legend.key.size = unit(1.9, "lines"))
+```
+
+<br>
+
+```{r, include = FALSE}
+combined_data_filtered <- combined_data[!is.na(combined_data$OLTV) & !is.na(combined_data$OCLTV),]
+```
+
+```{r Figure 5, echo = FALSE, fig.width=10, fig.height = 6, fig.cap="Loan to Value ratios"}
+plot1 <- ggplot(combined_data_filtered, aes(x = OLTV, y = ..count.., color = factor(year))) +
+  stat_bin(geom = "line", size = 1) +
+  labs(title = "Original Loan-to-Value",
+       x = "OLTV",
+       y = "Count",
+       color = "Year") +
+  scale_color_manual(values = c('darkred', 'grey')) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        plot.title = element_text(size = 19, face = "bold"),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.text = element_text(size = 12))
+
+plot2 <- ggplot(combined_data_filtered, aes(x = OCLTV, y = ..count.., color = factor(year))) +
+  stat_bin(geom = "line", size = 1) +
+  labs(title. = "Original Combined Loan-to-Value",
+       x = "OCLTV",
+       y = "Count",
+       color = "Year") +
+  scale_color_manual(values = c('darkred', 'grey')) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        plot.title = element_text(size = 19, face = "bold"),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.text = element_text(size = 12))
+
+y_limit <- max(
+  max(ggplot_build(plot1)$data[[1]]$y),
+  max(ggplot_build(plot2)$data[[1]]$y)
+)
+
+plot1 <- plot1 + ylim(0, y_limit)
+plot2 <- plot2 + ylim(0, y_limit)
+
+shared_plot <- plot_grid(plot1, plot2, align = 'v', ncol = 2)
+
+print(shared_plot)
+```
+
+<br>
+
+```{r, include = FALSE}
+default_rate <- combined_data %>%
+  group_by(OCC_STAT, year) %>%
+  summarize(Default_Rate = mean(DEFAULT_FLAG))
+occupation_labels <- c("I" = "Investor", "P" = "Principal", "S" = "Second")
+```
+
+```{r Figure 6, echo = FALSE, fig.width=10, fig.height = 5, fig.cap="Default Rates by Occupancy Status"}
+ggplot(default_rate, aes(x = factor(OCC_STAT), y = Default_Rate, fill = factor(year))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.5), width = 0.7, color = "white") + 
+  labs(x = "Occupancy Status", 
+       y = "Average Default Rate",
+       fill = "Year") +
+  scale_x_discrete(labels = occupation_labels) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 1), 
+        axis.title.x = element_text(margin = margin(t = 10)), 
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10),
+        legend.position="bottom",
+        panel.grid.major.x = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank()) +
+  scale_fill_manual(values = c("#1f78b4", "#33a02c")) 
+```
+
+<br>
+
+```{r, include = FALSE}
+sorted_data <- combined_data %>%
+  group_by(PURPOSE) %>%
+  summarize(Avg_Default_Rate = mean(DEFAULT_FLAG)) %>%
+  arrange(desc(Avg_Default_Rate)) %>%
+  droplevels()  
+default_rate <- combined_data %>%
+  group_by(PURPOSE, year) %>%
+  summarize(Avg_Default_Rate = mean(DEFAULT_FLAG)) %>%
+  arrange(factor(PURPOSE, levels = sorted_data$PURPOSE), desc(Avg_Default_Rate))
+purpose_labels <- c("P" = "Purchase", "C" = "Cash-Out Refinance", "R" = "Refinance")
+```
+
+```{r Figure 7, echo = FALSE, fig.width=10, fig.height = 5, fig.cap="Default Rates by Purpose of Loan"}
+ggplot(default_rate, aes(x = reorder(PURPOSE, Avg_Default_Rate), y = Avg_Default_Rate, fill = factor(year))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.6), color = "white") +
+  labs(x = "Purpose",
+       y = "Average Default Rate",
+       fill = "Year") +
+  scale_x_discrete(labels = purpose_labels) +  
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 1), 
+        axis.title.x = element_text(margin = margin(t = 10)),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10),
+        legend.position="bottom",
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        panel.grid.major.x = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank()) +
+  scale_fill_manual(values = c("#DB7093", "darkgray"))
+```
+
+<br>
+
+```{r, include = FALSE}
+q4_2007$DEFAULT_FLAG <- as.numeric(as.character(q4_2007$DEFAULT_FLAG))
+q4_2007 <- q4_2007 %>%
+  group_by(STATE) %>%
+  mutate(sum_defaults_state_2007 = sum(DEFAULT_FLAG, na.rm = TRUE)) %>%
+  ungroup()  
+```
+
+```{r, include = FALSE}
+q4_2019$DEFAULT_FLAG <- as.numeric(as.character(q4_2007$DEFAULT_FLAG))
+q4_2019 <- q4_2019 %>%
+  group_by(STATE) %>%
+  mutate(sum_defaults_state_2019 = sum(DEFAULT_FLAG, na.rm = TRUE)) %>%
+  ungroup()  
+```
+
+```{r, include = FALSE}
+interactive_data <- left_join(q4_2007 %>% select(STATE, sum_defaults_state_2007),
+                              q4_2019 %>% select(STATE, sum_defaults_state_2019),
+                              by = "STATE") %>%
+                    distinct(STATE, .keep_all = TRUE)
+colnames(interactive_data) <- c("state", "sum_default_2007", "sum_default_2019")
+```
+
+```{r, include = FALSE}
+top_defaulters <- interactive_data %>%
+  top_n(15, sum_default_2007)
+
+top_defaulters <- top_defaulters %>%
+  mutate(tooltip = paste("State: ", state, "\n",
+                         "Defaulters 2007: ", sum_default_2007, "\n",
+                         "Defaulters 2019: ", sum_default_2019))
+```
+
+```{r Figure 8, echo = FALSE, fig.width=10, fig.height = 9, fig.cap="Defaulters by State"}
+bar_Defaulters_2007 <- top_defaulters %>%
+  mutate(state = fct_reorder(state, sum_default_2007)) %>%
+  ggplot(aes(y = state, x = sum_default_2007, tooltip = tooltip, data_id = 1:15)) +
+  geom_col_interactive(fill = 'steelblue') + 
+  labs(y = 'Top 15 states', x = 'Total Defaulters 2007') +
+  theme_bw()
+
+bar_Defaulters_2019 <- top_defaulters %>%
+  mutate(state = fct_reorder(state, sum_default_2019)) %>%
+  ggplot(aes(y = state, x = sum_default_2019, tooltip = tooltip, data_id = 1:15)) +
+  geom_col_interactive(fill = 'red4') +
+  labs(y = 'Top 15 states', x = 'Total Defaulters 2019') +
+  theme_bw()
+
+scatterplot <- top_defaulters %>%
+  ggplot(aes(x = sum_default_2007, y = sum_default_2019, tooltip = tooltip, data_id = 1:15)) +
+  geom_point_interactive(size = 5, color = 'orange') +
+  labs(y = 'Total Defaulters 2019', x = 'Total Defaulters 2007') +
+  theme_bw()
+
+p_final <- (bar_Defaulters_2007 + bar_Defaulters_2019) / scatterplot
+
+girafe(print(p_final), 
+       options = list(opts_sizing(rescale = FALSE)))
+```
